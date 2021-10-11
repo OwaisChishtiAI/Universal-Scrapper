@@ -42,5 +42,19 @@ class DataBase:
             return dict(data)
         return 0
 
+    def is_url_in_db(self, url):
+        conn = self.connector()
+        cursor = conn.cursor()
+        cursor.execute("SELECT unique_key FROM url_key_parser WHERE url = '{}'".format(url))
+        unique_key_db = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if unique_key_db:
+            print("[INFO] URL EXISTS")
+            return unique_key_db[0]
+        else:
+            print("[INFO] URL NOT EXISTS")
+            return False
+
 
 # DataBase().get_urls()

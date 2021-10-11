@@ -8,6 +8,8 @@ import pandas as pd
 from database import DataBase
 from time import sleep
 from urllib.parse import urlparse
+from functools import partial
+import difflib
 
 from numpy.lib.type_check import imag
 from crawler import Crawler
@@ -34,6 +36,16 @@ DB_SECOND_WINDOW = None
 DB_SCR = None
 DB_HSCR = None
 DB_LV = None
+
+CH_TEXT = "No Data"
+CH_TABLES = "No Data"
+CH_VIDEOS = "No Data"
+CH_IMAGES = "No Data"
+CH_DATA_WINDOW = None
+CH_SECOND_WINDOW = None
+CH_SCR = None
+CH_HSCR = None
+CH_LV = None
 
 
 # this is a function to get the user input from the text input box
@@ -65,7 +77,7 @@ def create_data_window_text():
     if isinstance(TEXT, str):
         TEXT = [TEXT]
     for line in range(len(TEXT)):
-        mylist.insert(END, str(line) + ") " + TEXT[line])
+        mylist.insert(END, TEXT[line])
 
     mylist.pack( side = LEFT, fill = BOTH)
     scrollbar.config( command = mylist.yview )
@@ -88,7 +100,7 @@ def create_data_window_images():
     if isinstance(IMAGES, str):
         IMAGES = [IMAGES]
     for line in range(len(IMAGES)):
-        mylist.insert(END, str(line) + ") " + IMAGES[line])
+        mylist.insert(END, IMAGES[line])
 
     mylist.pack( side = LEFT, fill = BOTH)
     scrollbar.config( command = mylist.yview )
@@ -111,7 +123,7 @@ def create_data_window_videos():
     if isinstance(VIDEOS, str):
         VIDEOS = [VIDEOS]
     for line in range(len(VIDEOS)):
-        mylist.insert(END, str(line) + ") " + VIDEOS[line])
+        mylist.insert(END, VIDEOS[line])
 
     mylist.pack( side = LEFT, fill = BOTH)
     scrollbar.config( command = mylist.yview )
@@ -149,7 +161,7 @@ def create_data_window_tables():
     LV = mylist
     HSCR = hscrollbar
 
-############################################################################################################################################
+#########################################################DATABASE DATA MODAL STARTS#######################################################
 def create_data_window_text_db():
     global DB_DATA_WINDOW, DB_TEXT, DB_TABLES, DB_SCR, DB_LV, DB_HSCR
     if DB_SCR and DB_LV and DB_HSCR:
@@ -164,7 +176,7 @@ def create_data_window_text_db():
     if isinstance(DB_TEXT, str):
         DB_TEXT = [DB_TEXT]
     for line in range(len(DB_TEXT)):
-        mylist.insert(END, str(line) + ") " + DB_TEXT[line])
+        mylist.insert(END, DB_TEXT[line])
 
     mylist.pack( side = LEFT, fill = BOTH)
     scrollbar.config( command = mylist.yview )
@@ -187,7 +199,7 @@ def create_data_window_images_db():
     if isinstance(DB_IMAGES, str):
         DB_IMAGES = [DB_IMAGES]
     for line in range(len(DB_IMAGES)):
-        mylist.insert(END, str(line) + ") " + DB_IMAGES[line])
+        mylist.insert(END, DB_IMAGES[line])
 
     mylist.pack( side = LEFT, fill = BOTH)
     scrollbar.config( command = mylist.yview )
@@ -210,7 +222,7 @@ def create_data_window_videos_db():
     if isinstance(DB_VIDEOS, str):
         DB_VIDEOS = [DB_VIDEOS]
     for line in range(len(DB_VIDEOS)):
-        mylist.insert(END, str(line) + ") " + DB_VIDEOS[line])
+        mylist.insert(END, DB_VIDEOS[line])
 
     mylist.pack( side = LEFT, fill = BOTH)
     scrollbar.config( command = mylist.yview )
@@ -247,7 +259,115 @@ def create_data_window_tables_db():
     DB_SCR = scrollbar
     DB_LV = mylist
     DB_HSCR = hscrollbar
-############################################################################################################################################
+#######################################################DATABASE DATA MODAL ENDS############################################################
+
+def git_compare(first, second):
+    changes = []
+    for text in difflib.unified_diff(first.split("\n"), second.split("\n")):
+        if text[:3] not in ('+++', '---', '@@ '):
+            changes.append(text)
+    return changes
+
+#########################################################CHANGES DATA MODAL STARTS#######################################################
+def create_data_window_text_ch():
+    global CH_DATA_WINDOW, DB_TEXT, DB_TABLES, CH_SCR, CH_LV, CH_HSCR, TEXT
+    if CH_SCR and CH_LV and CH_HSCR:
+        destroyer([CH_SCR, CH_LV, CH_HSCR])
+    changes = git_compare("\n".join(DB_TEXT), "\n".join(TEXT))
+    scrollbar = Scrollbar(CH_DATA_WINDOW, orient=VERTICAL)
+    scrollbar.pack( side = RIGHT, fill = Y )
+
+    hscrollbar = Scrollbar(CH_DATA_WINDOW, orient=HORIZONTAL)
+    hscrollbar.pack( side = BOTTOM, fill = X )
+
+    mylist = Listbox(CH_DATA_WINDOW, yscrollcommand = scrollbar.set,xscrollcommand=hscrollbar.set, width=145, height=25)
+    if isinstance(changes, str):
+        changes = [changes]
+    for line in range(len(changes)):
+        mylist.insert(END, changes[line])
+
+    mylist.pack( side = LEFT, fill = BOTH)
+    scrollbar.config( command = mylist.yview )
+    hscrollbar.config( command = mylist.xview )
+    CH_SCR = scrollbar
+    CH_LV = mylist
+    CH_HSCR = hscrollbar
+
+def create_data_window_images_ch():
+    global DB_DATA_WINDOW, DB_IMAGES, DB_SCR, DB_LV, DB_HSCR
+    if DB_SCR and DB_LV and DB_HSCR:
+        destroyer([DB_SCR, DB_LV, DB_HSCR])
+    scrollbar = Scrollbar(DB_DATA_WINDOW)
+    scrollbar.pack( side = RIGHT, fill = Y )
+
+    hscrollbar = Scrollbar(DB_DATA_WINDOW, orient=HORIZONTAL)
+    hscrollbar.pack( side = BOTTOM, fill = X )
+
+    mylist = Listbox(DB_DATA_WINDOW, yscrollcommand = scrollbar.set,xscrollcommand=hscrollbar.set,  width=145, height=25)
+    if isinstance(DB_IMAGES, str):
+        DB_IMAGES = [DB_IMAGES]
+    for line in range(len(DB_IMAGES)):
+        mylist.insert(END, DB_IMAGES[line])
+
+    mylist.pack( side = LEFT, fill = BOTH)
+    scrollbar.config( command = mylist.yview )
+    hscrollbar.config( command = mylist.xview )
+    CH_SCR = scrollbar
+    CH_LV = mylist
+    CH_HSCR = hscrollbar
+
+def create_data_window_videos_ch():
+    global DB_DATA_WINDOW, DB_VIDEOS, DB_SCR, DB_LV, DB_HSCR
+    if DB_SCR and DB_LV and DB_HSCR:
+        destroyer([DB_SCR, DB_LV, DB_HSCR])
+    scrollbar = Scrollbar(DB_DATA_WINDOW)
+    scrollbar.pack( side = RIGHT, fill = Y )
+
+    hscrollbar = Scrollbar(DB_DATA_WINDOW, orient=HORIZONTAL)
+    hscrollbar.pack( side = BOTTOM, fill = X )
+
+    mylist = Listbox(DB_DATA_WINDOW, yscrollcommand = scrollbar.set,xscrollcommand=hscrollbar.set,  width=145, height=25)
+    if isinstance(DB_VIDEOS, str):
+        DB_VIDEOS = [DB_VIDEOS]
+    for line in range(len(DB_VIDEOS)):
+        mylist.insert(END, DB_VIDEOS[line])
+
+    mylist.pack( side = LEFT, fill = BOTH)
+    scrollbar.config( command = mylist.yview )
+    hscrollbar.config( command = mylist.xview )
+    CH_SCR = scrollbar
+    CH_LV = mylist
+    CH_HSCR = hscrollbar
+
+def create_data_window_tables_ch():
+    global DB_DATA_WINDOW, DB_TABLES, DB_SCR, DB_LV, DB_HSCR
+    if DB_SCR and DB_LV and DB_HSCR:
+        destroyer([DB_SCR, DB_LV, DB_HSCR])
+    scrollbar = Scrollbar(DB_DATA_WINDOW)
+    scrollbar.pack( side = RIGHT, fill = Y )
+
+    hscrollbar = Scrollbar(DB_DATA_WINDOW, orient=HORIZONTAL)
+    hscrollbar.pack( side = BOTTOM, fill = X )
+
+    mylist = Listbox(DB_DATA_WINDOW, yscrollcommand = scrollbar.set,xscrollcommand=hscrollbar.set,  width=145, height=25)
+    if isinstance(DB_TABLES, str):
+        DB_TABLES = [DB_TABLES]
+    for line in range(len(DB_TABLES)):
+        if isinstance(DB_TABLES[line], pd.core.frame.DataFrame):
+            mylist.insert(END, "Table# {}".format(line+1))
+            mylist.insert(END, "_______________________")
+            for i in range(len(DB_TABLES[line])):
+                mylist.insert(END, DB_TABLES[line].iloc[i, :])
+        else:
+            mylist.insert(END, DB_TABLES[line])
+
+    mylist.pack( side = LEFT, fill = BOTH)
+    scrollbar.config( command = mylist.yview )
+    hscrollbar.config( command = mylist.xview )
+    CH_SCR = scrollbar
+    CH_LV = mylist
+    CH_HSCR = hscrollbar
+#######################################################CHANGES DATA MODAL ENDS############################################################
 
 def save_data_to_database():
     global PARENT_PATH, TEXT, TABLES, IMAGES, VIDEOS, SECOND_WINDOW, URL
@@ -275,9 +395,69 @@ def destroy_second_window():
     global SECOND_WINDOW
     SECOND_WINDOW.destroy()
 
+def show_changes_window(selection):
+    print("SELECTION URL ", selection)
+    global CH_DATA_WINDOW, CH_SECOND_WINDOW
+    def get_orig_data_database(key):
+        global DB_TEXT, DB_IMAGES, DB_VIDEOS, DB_TABLES
+        print("[INFO] FOLDER KEY ", key)
+        data_path = os.path.join(PARENT_PATH, key)
+        text = []
+        images = []
+        videos = []
+        tables = []
+        csv_cnt = 0
+        with open(os.path.join(data_path, 'text'), encoding='utf8', errors='ignore')as f:
+            text = f.read().split("\n")
+        with open(os.path.join(data_path, 'images'), encoding='utf8', errors='ignore')as f:
+            images = f.read().split("\n")
+        with open(os.path.join(data_path, 'videos'), encoding='utf8', errors='ignore')as f:
+            videos = f.read().split("\n")
+        csv_files = os.listdir(data_path)
+        for each in csv_files:
+            if '.csv' in each:
+                csv_cnt += 1
+        print("[INFO] {} CSV Files Found".format(str(csv_cnt)))
+        for i in range(csv_cnt):
+            tables.append(pd.read_csv(os.path.join(data_path, "table-{}.csv".format(i) )))
+        DB_TEXT = text
+        DB_IMAGES = images
+        DB_VIDEOS = videos
+        DB_TABLES = tables
+        ##################################################### INNER FUNCTION ENDS HERE
+
+    window4 = tk.Toplevel(root)
+    disp_wind = tk.Canvas(window4, height=592, width=891)
+    window4.resizable(0, 0)
+    CH_SECOND_WINDOW = window4
+    disp_wind.pack()
+    disp_wind.configure(background='#FFFFFF')
+    text_data = Button(window4, text='Text Data', bg='#00FF00', font=('arial', 12, 'normal'), command=create_data_window_text_ch, state="normal")
+    text_data.place(x=100+120, y=50)
+    tables_data = Button(window4, text='Tablular Data', bg='#00FF00', font=('arial', 12, 'normal'), command=create_data_window_tables_ch, state="normal")
+    tables_data.place(x=185+120, y=50)
+    images_data = Button(window4, text='Media - Images', bg='#00FF00', font=('arial', 12, 'normal'), command=create_data_window_images_ch, state="normal")
+    images_data.place(x=295+120, y=50)
+    videos_data = Button(window4, text='Media - Videos', bg='#00FF00', font=('arial', 12, 'normal'), command=create_data_window_videos_ch, state="normal")
+    videos_data.place(x=420+120, y=50)
+    ttk.Separator(window4, orient='horizontal').place(x=0, y=85, relwidth=6)
+    data_window = tk.Canvas(window4, height=450, width=891)
+    data_window.place(x=0, y=95)
+    CH_DATA_WINDOW = data_window
+    get_orig_data_database(selection)
+    
+
 # this is the function called when the button is clicked
 def show_data_window():
-    global  DATA_WINDOW, SECOND_WINDOW
+    global  DATA_WINDOW, SECOND_WINDOW, URL
+    """
+    1- get URL 
+    2- check URL in SQL3 DB
+    3- if yes:
+        ENABLE show changes button
+        on click show new window
+        show comparison
+    """
     print('clicked')
     window = tk.Toplevel(root)
     SECOND_WINDOW = window
@@ -299,8 +479,15 @@ def show_data_window():
     DATA_WINDOW = data_window
     save_data_inside = Button(window, text='Save', bg='#00FF00', font=('arial', 12, 'normal'),command=save_data_to_database, state="normal")#disabled
     save_data_inside.place(x=450-40, y=550)
-    gp_back = Button(window, text='Discard', bg='#00FF00', font=('arial', 12, 'normal'), command=destroy_second_window, state="normal")
-    gp_back.place(x=880-70, y=550)
+    go_back = Button(window, text='Discard', bg='#00FF00', font=('arial', 12, 'normal'), command=destroy_second_window, state="normal")
+    go_back.place(x=880-70, y=550)
+    need_to_show_changes = DataBase().is_url_in_db(URL)
+    if need_to_show_changes:
+        show_changes = Button(window, text='Show Changes', bg='#00FF00', font=('arial', 12, 'normal'),command=partial(show_changes_window, need_to_show_changes), state="normal")#disabled
+        show_changes.place(x=490, y=550)
+    else:
+        show_changes = Button(window, text='Nothing to Compare', bg='#00FF00', font=('arial', 12, 'normal'),command=None, state="disabled")#disabled
+        show_changes.place(x=490, y=550)
 
 
 def show_database_window():
@@ -405,6 +592,7 @@ def btnStartScraping():
         root.update()
         crawl.set_url(url)
         text = crawl.scrape_text()
+        text[1] = "0132323e2342342345"
         if text:
             TEXT = text
         print(text)
