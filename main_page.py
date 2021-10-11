@@ -10,11 +10,13 @@ from time import sleep
 from urllib.parse import urlparse
 from functools import partial
 import difflib
+from pathlib import Path
+import tkinter.messagebox as messagebox
 
 from numpy.lib.type_check import imag
 from crawler import Crawler
 
-
+SELECTION = None
 PARENT_PATH = 'assets/images/.cache/.database'
 URL = None
 TEXT = "No Data"
@@ -501,7 +503,8 @@ def show_data_window():
 def show_database_window():
     global DB_DATA_WINDOW, DB_SECOND_WINDOW
     def list_urls_tab_value(selection):
-        global DB_TEXT, DB_IMAGES, DB_VIDEOS, DB_TABLES
+        global DB_TEXT, DB_IMAGES, DB_VIDEOS, DB_TABLES, SELECTION
+        SELECTION = selection
         key = urls_ids[selection]
         print("[INFO] FOLDER KEY ", key)
         data_path = os.path.join(PARENT_PATH, key)
@@ -527,7 +530,52 @@ def show_database_window():
         DB_IMAGES = images
         DB_VIDEOS = videos
         DB_TABLES = tables
+
+    def download_files():
+        global DB_TEXT, DB_IMAGES, DB_VIDEOS, DB_TABLES, SELECTION
+        key = urls_ids[SELECTION]
+        print("[INFO] FOLDER KEY ", key)
+        data_path = os.path.join(PARENT_PATH, key)
+        text = []
+        images = []
+        videos = []
+        tables = []
+        csv_cnt = 0
+        with open(os.path.join(data_path, 'text'), encoding='utf8', errors='ignore')as f:
+            text = f.read().split("\n")
+        with open(os.path.join(data_path, 'images'), encoding='utf8', errors='ignore')as f:
+            images = f.read().split("\n")
+        with open(os.path.join(data_path, 'videos'), encoding='utf8', errors='ignore')as f:
+            videos = f.read().split("\n")
+        csv_files = os.listdir(data_path)
+        for each in csv_files:
+            if '.csv' in each:
+                csv_cnt += 1
+        print("[INFO] {} CSV Files Found".format(str(csv_cnt)))
+        for i in range(csv_cnt):
+            tables.append(pd.read_csv(os.path.join(data_path, "table-{}.csv".format(i) )))
+        DB_TEXT = text
+        DB_IMAGES = images
+        DB_VIDEOS = videos
+        DB_TABLES = tables
+        downloads_path = str(Path.home() / "Downloads")
+        if '\\' in downloads_path:
+            downloads_path = downloads_path.replace("\\", "/")
+        downloads_path = os.path.join(downloads_path, "Universal Scrapper")
+        os.makedirs(downloads_path, exist_ok=True)
+        with open(os.path.join(downloads_path, 'text.txt'), "w", encoding='utf8', errors='ignore')as f:
+            f.write("\n".join(DB_TEXT))
+        with open(os.path.join(downloads_path, 'images.txt'), "w", encoding='utf8', errors='ignore')as f:
+            f.write("\n".join(DB_IMAGES))
+        with open(os.path.join(downloads_path, 'videos.txt'), "w", encoding='utf8', errors='ignore')as f:
+            f.write("\n".join(DB_VIDEOS))
+        for i in range(len(DB_TABLES)):
+            if isinstance(DB_TABLES[i], pd.core.frame.DataFrame):
+                DB_TABLES[i].to_csv(os.path.join(downloads_path, "table-{}.csv".format(i) ), index=False)
+        messagebox.showinfo("Download Status", "Files Saves in {}".format(downloads_path))
+        print("[INFO] Data Saved Successfully.")
         ##################################################### INNER FUNCTION ENDS HERE
+    
 
     window3 = tk.Toplevel(root)
     disp_wind = tk.Canvas(window3, height=592, width=891)
@@ -557,6 +605,8 @@ def show_database_window():
         list_urls_tab = OptionMenu(window3, variable, *list_urls, command=list_urls_tab_value)
         list_urls_tab.config(bg='#00FF00')
         list_urls_tab.place(x=0, y=0)
+    download = Button(window3, text='Download Files', bg='#00FF00', font=('arial', 12, 'normal'), command=download_files, state="normal")
+    download.place(x=880-130, y=550)
 
 def validate_url(url):
     try:
