@@ -284,7 +284,8 @@ def create_data_window_text_ch():
     if isinstance(changes, str):
         changes = [changes]
     for line in range(len(changes)):
-        mylist.insert(END, changes[line])
+        if changes[line].startswith('-') or changes[line].startswith('+'):
+            mylist.insert(END, changes[line])
 
     mylist.pack( side = LEFT, fill = BOTH)
     scrollbar.config( command = mylist.yview )
@@ -294,20 +295,22 @@ def create_data_window_text_ch():
     CH_HSCR = hscrollbar
 
 def create_data_window_images_ch():
-    global DB_DATA_WINDOW, DB_IMAGES, DB_SCR, DB_LV, DB_HSCR
-    if DB_SCR and DB_LV and DB_HSCR:
-        destroyer([DB_SCR, DB_LV, DB_HSCR])
-    scrollbar = Scrollbar(DB_DATA_WINDOW)
+    global DB_DATA_WINDOW, DB_IMAGES, CH_SCR, CH_LV, CH_HSCR, IMAGES
+    if CH_SCR and CH_LV and CH_HSCR:
+        destroyer([CH_SCR, CH_LV, CH_HSCR])
+    changes = git_compare("\n".join(DB_IMAGES), "\n".join(IMAGES))
+    scrollbar = Scrollbar(CH_DATA_WINDOW, orient=VERTICAL)
     scrollbar.pack( side = RIGHT, fill = Y )
 
-    hscrollbar = Scrollbar(DB_DATA_WINDOW, orient=HORIZONTAL)
+    hscrollbar = Scrollbar(CH_DATA_WINDOW, orient=HORIZONTAL)
     hscrollbar.pack( side = BOTTOM, fill = X )
 
-    mylist = Listbox(DB_DATA_WINDOW, yscrollcommand = scrollbar.set,xscrollcommand=hscrollbar.set,  width=145, height=25)
-    if isinstance(DB_IMAGES, str):
-        DB_IMAGES = [DB_IMAGES]
-    for line in range(len(DB_IMAGES)):
-        mylist.insert(END, DB_IMAGES[line])
+    mylist = Listbox(CH_DATA_WINDOW, yscrollcommand = scrollbar.set,xscrollcommand=hscrollbar.set, width=145, height=25)
+    if isinstance(changes, str):
+        changes = [changes]
+    for line in range(len(changes)):
+        if changes[line].startswith('-') or changes[line].startswith('+'):
+            mylist.insert(END, changes[line])
 
     mylist.pack( side = LEFT, fill = BOTH)
     scrollbar.config( command = mylist.yview )
@@ -317,20 +320,22 @@ def create_data_window_images_ch():
     CH_HSCR = hscrollbar
 
 def create_data_window_videos_ch():
-    global DB_DATA_WINDOW, DB_VIDEOS, DB_SCR, DB_LV, DB_HSCR
-    if DB_SCR and DB_LV and DB_HSCR:
-        destroyer([DB_SCR, DB_LV, DB_HSCR])
-    scrollbar = Scrollbar(DB_DATA_WINDOW)
+    global DB_DATA_WINDOW, DB_VIDEOS, CH_SCR, CH_LV, CH_HSCR, VIDEOS
+    if CH_SCR and CH_LV and CH_HSCR:
+        destroyer([CH_SCR, CH_LV, CH_HSCR])
+    changes = git_compare("\n".join(DB_VIDEOS), "\n".join(VIDEOS))
+    scrollbar = Scrollbar(CH_DATA_WINDOW, orient=VERTICAL)
     scrollbar.pack( side = RIGHT, fill = Y )
 
-    hscrollbar = Scrollbar(DB_DATA_WINDOW, orient=HORIZONTAL)
+    hscrollbar = Scrollbar(CH_DATA_WINDOW, orient=HORIZONTAL)
     hscrollbar.pack( side = BOTTOM, fill = X )
 
-    mylist = Listbox(DB_DATA_WINDOW, yscrollcommand = scrollbar.set,xscrollcommand=hscrollbar.set,  width=145, height=25)
-    if isinstance(DB_VIDEOS, str):
-        DB_VIDEOS = [DB_VIDEOS]
-    for line in range(len(DB_VIDEOS)):
-        mylist.insert(END, DB_VIDEOS[line])
+    mylist = Listbox(CH_DATA_WINDOW, yscrollcommand = scrollbar.set,xscrollcommand=hscrollbar.set, width=145, height=25)
+    if isinstance(changes, str):
+        changes = [changes]
+    for line in range(len(changes)):
+        if changes[line].startswith('-') or changes[line].startswith('+'):
+            mylist.insert(END, changes[line])
 
     mylist.pack( side = LEFT, fill = BOTH)
     scrollbar.config( command = mylist.yview )
@@ -340,26 +345,29 @@ def create_data_window_videos_ch():
     CH_HSCR = hscrollbar
 
 def create_data_window_tables_ch():
-    global DB_DATA_WINDOW, DB_TABLES, DB_SCR, DB_LV, DB_HSCR
-    if DB_SCR and DB_LV and DB_HSCR:
-        destroyer([DB_SCR, DB_LV, DB_HSCR])
-    scrollbar = Scrollbar(DB_DATA_WINDOW)
+    global DB_DATA_WINDOW, DB_TABLES, CH_SCR, CH_LV, CH_HSCR, TABLES
+    if CH_SCR and CH_LV and CH_HSCR:
+        destroyer([CH_SCR, CH_LV, CH_HSCR])
+
+    changes = pd.concat([DB_TABLES.set_index('Date'), TABLES.set_index('Date')], axis='columns', keys=['First', 'Second'])
+    changes = [changes]
+    scrollbar = Scrollbar(CH_DATA_WINDOW)
     scrollbar.pack( side = RIGHT, fill = Y )
 
-    hscrollbar = Scrollbar(DB_DATA_WINDOW, orient=HORIZONTAL)
+    hscrollbar = Scrollbar(CH_DATA_WINDOW, orient=HORIZONTAL)
     hscrollbar.pack( side = BOTTOM, fill = X )
 
-    mylist = Listbox(DB_DATA_WINDOW, yscrollcommand = scrollbar.set,xscrollcommand=hscrollbar.set,  width=145, height=25)
-    if isinstance(DB_TABLES, str):
-        DB_TABLES = [DB_TABLES]
-    for line in range(len(DB_TABLES)):
-        if isinstance(DB_TABLES[line], pd.core.frame.DataFrame):
+    mylist = Listbox(CH_DATA_WINDOW, yscrollcommand = scrollbar.set,xscrollcommand=hscrollbar.set,  width=145, height=25)
+    if isinstance(changes, str):
+        changes = [changes]
+    for line in range(len(changes)):
+        if isinstance(changes[line], pd.core.frame.DataFrame):
             mylist.insert(END, "Table# {}".format(line+1))
             mylist.insert(END, "_______________________")
-            for i in range(len(DB_TABLES[line])):
-                mylist.insert(END, DB_TABLES[line].iloc[i, :])
+            for i in range(len(changes[line])):
+                mylist.insert(END, changes[line].iloc[i, :])
         else:
-            mylist.insert(END, DB_TABLES[line])
+            mylist.insert(END, changes[line])
 
     mylist.pack( side = LEFT, fill = BOTH)
     scrollbar.config( command = mylist.yview )
@@ -387,7 +395,7 @@ def save_data_to_database():
         f.write("\n".join(VIDEOS))
     for i in range(len(TABLES)):
         if isinstance(TABLES[i], pd.core.frame.DataFrame):
-            TABLES[i].to_csv(os.path.join(save_path, "table-{}.csv".format(i)))
+            TABLES[i].to_csv(os.path.join(save_path, "table-{}.csv".format(i) ), index=False)
     print("[INFO] Data Saved Successfully.")
     SECOND_WINDOW.destroy()
 
@@ -601,7 +609,7 @@ def btnStartScraping():
             TABLES = tables
         print(tables)
         images, videos = crawl.scrape_media()
-        if images:
+        if images: 
             IMAGES = images
         if videos:
             VIDEOS = videos
